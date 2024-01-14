@@ -127,12 +127,34 @@ const sortData = (data) => {
 
 const langMap = new Map([
   ["zh-cn", "简体中文"],
+  ["zh-tw", "繁體中文"],
+  ["de-de", "Deutsch"],
   ["en-us", "English"],
+  ["es-es", "Español"],
+  ["fr-fr", "Français"],
+  ["id-id", "Indonesia"],
+  ["ja-jp", "日本語"],
+  ["ko-kr", "한국어"],
+  ["pt-pt", "Português"],
+  ["ru-ru", "Pусский"],
+  ["th-th", "ภาษาไทย"],
+  ["vi-vn", "Tiếng Việt"],
 ]);
 
 const localeMap = new Map([
   ["zh-cn", ["zh", "zh-CN"]],
+  ["zh-tw", ["zh-TW"]],
+  ["de-de", ["de-AT", "de-CH", "de-DE", "de"]],
   ["en-us", ["en-AU", "en-CA", "en-GB", "en-NZ", "en-US", "en-ZA", "en"]],
+  ["es-es", ["es", "es-419"]],
+  ["fr-fr", ["fr-CA", "fr-CH", "fr-FR", "fr"]],
+  ["id-id", ["id"]],
+  ["ja-jp", ["ja"]],
+  ["ko-kr", ["ko"]],
+  ["pt-pt", ["pt-BR", "pt-PT", "pt"]],
+  ["ru-ru", ["ru"]],
+  ["th-th", ["th"]],
+  ["vi-vn", ["vi"]],
 ]);
 
 const detectLocale = () => {
@@ -209,39 +231,6 @@ const localIp = () => {
   return "127.0.0.1";
 };
 
-const getGamePath = () => {
-  let userPath;
-  if (!process.env.WINEPREFIX) {
-    userPath = app.getPath("home");
-  } else {
-    userPath = path.join(
-      process.env.WINEPREFIX,
-      "drive_c/users",
-      process.env.USER
-    );
-  }
-  try {
-    var lines = fs
-      .readFileSync(
-        path.join(
-          userPath,
-          "/AppData/LocalLow/SunBorn/",
-          "少女前线2：追放/Player.log"
-        ),
-        "utf8"
-      )
-      .split(/\r?\n/);
-    var gamePath = lines
-      .find((x) => x.startsWith("[Subsystems] Discovering subsystems at path "))
-      .replace("[Subsystems] Discovering subsystems at path ", "")
-      .replace("/UnitySubsystems", "");
-    return gamePath;
-  } catch (e) {
-    console.log(e);
-  }
-  return "";
-};
-
 async function getCacheText(gamePath) {
   const results = await glob(
     path.join(gamePath, "/LocalCache/Log/{/,/*/}.bin_c1"),
@@ -280,7 +269,6 @@ module.exports = {
   userPath,
   detectLocale,
   langMap,
-  getGamePath,
   getCacheText,
   appRoot,
   userDataPath,

@@ -18,9 +18,10 @@ const config = require("./config");
 const i18n = require("./i18n");
 const { enableProxy, disableProxy } = require("./module/system-proxy");
 const mitmproxy = require("./module/node-mitmproxy");
-const { NameRarityDictionary } = require("./datatable");
 
 const dataMap = new Map();
+let apiDomain = "https://gf2-gacha-record.sunborngame.com";
+var gachaUrl;
 
 const saveData = async (data, url) => {
   const obj = Object.assign({}, data);
@@ -94,15 +95,27 @@ const compareList = (b, a) => {
 const mergeList = (a, b) => {
   if (!a || !a.length) return b || [];
   if (!b || !b.length) return a;
-  const minA = new Date(a[0][5]).getTime();
+  const minA = new Date(a[0][0]).getTime();
+  const idA = a[0][5];
   let pos = b.length;
-  let width = Math.min(11, a.length, b.length);
-  for (let i = 0; i < b.length; i++) {
-    const time = new Date(b[i][5]).getTime();
-    if (time >= minA) {
-      if (compareList(b.slice(i, width + i), a.slice(0, width))) {
-        pos = i;
-        break;
+  let idFounded = false;
+  for (let i = b.length - 1; i >= 0; i--) {
+    let idB = b[i][5];
+    if (idB && idB === idA) {
+      pos = i;
+      idFounded = true;
+      break;
+    }
+  }
+  if (!idFounded) {
+    let width = Math.min(11, a.length, b.length);
+    for (let i = 0; i < b.length; i++) {
+      const time = new Date(b[i][0]).getTime();
+      if (time >= minA) {
+        if (compareList(b.slice(i, width + i), a.slice(0, width))) {
+          pos = i;
+          break;
+        }
       }
     }
   }
@@ -188,6 +201,9 @@ const readLog = async () => {
       const addr = logText
         .find((x) => x.startsWith("设置扭蛋记录地址 "))
         .replace("设置扭蛋记录地址 ", "");
+
+      console.log(addr);
+
       const accessTokenLine = logText
         .find((x) =>
           x.startsWith(
@@ -197,6 +213,7 @@ const readLog = async () => {
         .replace("Response = ", "");
       const accessTokenJson = JSON.parse(accessTokenLine);
       const accessToken = accessTokenJson.data.access_token;
+      gachaUrl=addr;
       return { url: addr, accessToken: accessToken };
     });
     const result = await Promise.all(promises);
@@ -225,6 +242,9 @@ const getGachaLog = async ({ gachaType, fragment, name, retryCount, ua }) => {
     fragment === ""
       ? `type_id=${gachaType}`
       : `next=${fragment}&type_id=${gachaType}`;
+  console.log(
+    `gachaType ${gachaType} frag ${fragment} URL ${ua.url} AT ${ua.accessToken} PL ${payload}`
+  );
   try {
     const res = await request(ua, payload);
     return [res.data.list, res.data.next];
@@ -408,15 +428,7 @@ const fetchData = async () => {
   for (const type of defaultTypeMap) {
     const list = await getGachaLogs(type[0], type[1], account, ua);
     const logs = list.map((item) => {
-      var tabledata = NameRarityDictionary[item.item];
-      return [
-        item.item,
-        tabledata.name,
-        tabledata.rank,
-        tabledata.isCharacter,
-        item.pool_id,
-        item.time,
-      ];
+      return [item.item, item.pool_id, item.time];
     });
     logs.reverse();
     typeMap.set(type[0], type[1]);
@@ -497,7 +509,7 @@ ipcMain.handle("OPEN_CACHE_FOLDER", () => {
 });
 
 ipcMain.handle("COPY_URL", async () => {
-  const url = await getUrl();
+  const url = gachaUrl;
   if (url) {
     clipboard.writeText(url);
     return true;

@@ -19,6 +19,7 @@ function createWindow() {
   }
 }
 
+
 const isFirstInstance = app.requestSingleInstanceLock()
 
 if (!isFirstInstance) {

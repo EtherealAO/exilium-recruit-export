@@ -1,10 +1,10 @@
-const ExcelJS = require("./module/exceljs.min.js");
-const getData = require("./getData").getData;
-const { app, ipcMain, dialog } = require("electron");
-const fs = require("fs-extra");
-const path = require("path");
-const i18n = require("./i18n");
-const cloneDeep = require("lodash-es/cloneDeep").default;
+const ExcelJS = require('./module/exceljs.min.js')
+const getData = require('./getData').getData
+const { app, ipcMain, dialog } = require('electron')
+const fs = require('fs-extra')
+const path = require('path')
+const i18n = require('./i18n')
+const cloneDeep  = require('lodash-es/cloneDeep').default
 
 function pad(num) {
   return `${num}`.padStart(2, "0");
@@ -22,120 +22,109 @@ function getTimeString() {
 }
 
 const start = async () => {
-  const { header, customFont, filePrefix, fileType } = i18n.excel;
-  const { dataMap, current } = getData();
-  const data = dataMap.get(current);
+  const { header, customFont, filePrefix, fileType, wish2 } = i18n.excel
+  const { dataMap, current } = await getData()
+  const data = dataMap.get(current)
   // https://github.com/sunfkny/genshin-gacha-export-js/blob/main/index.js
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new ExcelJS.Workbook()
   for (let [key, value] of data.result) {
-    const name = data.typeMap.get(key);
-    const sheet = workbook.addWorksheet(name, {
-      views: [{ state: "frozen", ySplit: 1 }],
-    });
-    let width = [24, 14, 8, 8, 8, 8, 8];
-    const excelKeys = [
-      "time",
-      "name",
-      "type",
-      "rank",
-      "total",
-      "pity",
-      "remark",
-    ];
+    const name = data.typeMap.get(key)
+    const sheet = workbook.addWorksheet(name, {views: [{state: 'frozen', ySplit: 1}]})
+    let width = [24, 14, 8, 8, 8, 8, 8]
+    if (!data.lang.includes('zh-')) {
+      width = [24, 32, 16, 12, 12, 12, 8]
+    }
+    const excelKeys = ['time', 'name', 'type', 'rank', 'total', 'pity', 'remark']
     sheet.columns = excelKeys.map((key, index) => {
       return {
         header: header[key],
         key,
-        width: width[index],
-      };
-    });
+        width: width[index]
+      }
+    })
     // get gacha logs
-    const logs = cloneDeep(value);
-    let total = 0;
-    let pity = 0;
-    for (let log of logs) {
-      var namE = log[1];
-      var rank = log[2];
-      var isCharacter = log[3];
-      var pool = log[4];
-      var time = log[5];
-      log[0] = time;
-      log[1] = namE;
-      log[2] = isCharacter ? "角色" : "武器";
-      log[3] = rank;
-      log[6] = pool;
-      total += 1;
-      pity += 1;
-      log[4] = total;
-      log[5] = pity;
+    const logs = cloneDeep(value)
+    let total = 0
+    let pity = 0
+    for (let log of logs){
+      total += 1
+      pity += 1
+      let gachaType = log[4]
+      log[4] = total
+      log[5] = pity
       if (log[3] === 5) {
-        pity = 0;
+        pity = 0
+      }
+      if (key === '301') {
+        if (gachaType === '400') {
+          log.push(wish2)
+        }
       }
     }
 
-    sheet.addRows(logs);
+    sheet.addRows(logs)
     // set xlsx hearer style
-    ["A", "B", "C", "D", "E", "F", "G"].forEach((v) => {
+    ;(["A", "B", "C", "D","E","F", "G"]).forEach((v) => {
       sheet.getCell(`${v}1`).border = {
-        top: { style: "thin", color: { argb: "ffc4c2bf" } },
-        left: { style: "thin", color: { argb: "ffc4c2bf" } },
-        bottom: { style: "thin", color: { argb: "ffc4c2bf" } },
-        right: { style: "thin", color: { argb: "ffc4c2bf" } },
-      };
+        top: {style:'thin', color: {argb:'ffc4c2bf'}},
+        left: {style:'thin', color: {argb:'ffc4c2bf'}},
+        bottom: {style:'thin', color: {argb:'ffc4c2bf'}},
+        right: {style:'thin', color: {argb:'ffc4c2bf'}}
+      }
       sheet.getCell(`${v}1`).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "ffdbd7d3" },
-      };
-      sheet.getCell(`${v}1`).font = {
+        type: 'pattern',
+        pattern:'solid',
+        fgColor:{argb:'ffdbd7d3'},
+      }
+      sheet.getCell(`${v}1`).font ={
         name: customFont,
         color: { argb: "ff757575" },
-        bold: true,
-      };
-    });
+        bold : true
+      }
+
+    })
     // set xlsx cell style
     logs.forEach((v, i) => {
-      ["A", "B", "C", "D", "E", "F", "G"].forEach((c) => {
+      ;(["A", "B", "C", "D","E","F", "G"]).forEach((c) => {
         sheet.getCell(`${c}${i + 2}`).border = {
-          top: { style: "thin", color: { argb: "ffc4c2bf" } },
-          left: { style: "thin", color: { argb: "ffc4c2bf" } },
-          bottom: { style: "thin", color: { argb: "ffc4c2bf" } },
-          right: { style: "thin", color: { argb: "ffc4c2bf" } },
-        };
+          top: {style:'thin', color: {argb:'ffc4c2bf'}},
+          left: {style:'thin', color: {argb:'ffc4c2bf'}},
+          bottom: {style:'thin', color: {argb:'ffc4c2bf'}},
+          right: {style:'thin', color: {argb:'ffc4c2bf'}}
+        }
         sheet.getCell(`${c}${i + 2}`).fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "ffebebeb" },
-        };
+          type: 'pattern',
+          pattern:'solid',
+          fgColor:{argb:'ffebebeb'},
+        }
         // rare rank background color
         const rankColor = {
           3: "ff8e8e8e",
           4: "ffa256e1",
           5: "ffbd6932",
-        };
+        }
         sheet.getCell(`${c}${i + 2}`).font = {
           name: customFont,
           color: { argb: rankColor[v[3]] },
-          bold: v[3] != "3",
-        };
-      });
-    });
+          bold : v[3]!="3"
+        }
+      })
+    })
   }
 
-  const buffer = await workbook.xlsx.writeBuffer();
+  const buffer = await workbook.xlsx.writeBuffer()
   const filePath = dialog.showSaveDialogSync({
-    defaultPath: path.join(
-      app.getPath("downloads"),
-      `${filePrefix}_${getTimeString()}`
-    ),
-    filters: [{ name: fileType, extensions: ["xlsx"] }],
-  });
+    defaultPath: path.join(app.getPath('downloads'), `${filePrefix}_${getTimeString()}`),
+    filters: [
+      { name: fileType, extensions: ['xlsx'] }
+    ]
+  })
   if (filePath) {
-    await fs.ensureFile(filePath);
-    await fs.writeFile(filePath, buffer);
+    await fs.ensureFile(filePath)
+    await fs.writeFile(filePath, buffer)
   }
-};
+}
 
-ipcMain.handle("SAVE_EXCEL", async () => {
-  await start();
-});
+ipcMain.handle('SAVE_EXCEL', async () => {
+  await start()
+})
