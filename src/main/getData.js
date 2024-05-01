@@ -186,9 +186,25 @@ const readLog = async () => {
       )
         .split(/\r?\n/)
         .reverse();
-      const addr = logText
-        .find((x) => x.startsWith("扭蛋记录 Url = "))
-        .replace("扭蛋记录 Url = ", "");
+
+      const url_reg = "\"k\":\"gacha_record_url\",\"v\":\"(.+?)\"";
+      var addr = undefined;
+      logText.forEach((value, index, array) => {
+        if (addr)
+          return;
+        var reg_result = value.match(url_reg);
+        if (reg_result)
+          addr = reg_result[1];
+      });
+
+      if (!addr)
+      {
+        throw Error("Url not found");
+      }
+      // console.log(addr);
+
+      // Gacha record address is most likely the following, but implemented a regex search function just in case.
+      // const addr = "https://gf2-gacha-record.sunborngame.com/list";
       gachaUrl = addr;
       const accessTokenLine = logText
         .find((x) =>
