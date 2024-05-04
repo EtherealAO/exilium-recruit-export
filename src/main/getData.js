@@ -187,18 +187,18 @@ const readLog = async () => {
         .split(/\r?\n/)
         .reverse();
 
-      const url_reg = "\"k\":\"gacha_record_url\",\"v\":\"(.+?)\"";
-      var addr = undefined;
-      logText.forEach((value, index, array) => {
-        if (addr)
-          return;
-        var reg_result = value.match(url_reg);
-        if (reg_result)
+      // const url_reg = "\"k\":\"gacha_record_url\",\"v\":\"(.+?)\"";
+      const url_reg = '"gacha_record_url":"(.+?)"';
+      let addr = undefined;
+      for (let value of logText) {
+        const reg_result = value.match(url_reg);
+        if (reg_result) {
           addr = reg_result[1];
-      });
+          break;
+        }
+      }
 
-      if (!addr)
-      {
+      if (!addr) {
         throw Error("Url not found");
       }
       // console.log(addr);
