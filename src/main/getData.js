@@ -56,7 +56,13 @@ const readData = async () => {
   await fs.ensureDir(userDataPath);
   const files = await readdir(userDataPath);
   for (let name of files) {
-    if (/^gacha-list-\d+\.json$/.test(name)) {
+    const regAtext = "[!#-'*+/-9=?A-Z^-~-]";
+    const regLocalPart = `(${regAtext}+(\.${regAtext}+)*|"([]!#-[^-~ \t]|(\\[\t -~]))+")`;
+    const regDomain = `(${regAtext}+(\.${regAtext}+)*|\[[\t -Z^-~]*])`;
+    const regAddrSpec = `((${regLocalPart}@)?${regDomain})`;
+    const regJsonName = `^gacha-list-${regAddrSpec}\.json$`;
+    const reg = new RegExp(regJsonName);
+    if (reg.test(name)) {
       try {
         const data = await readJSON(name);
         data.typeMap = new Map(data.typeMap) || defaultTypeMap;

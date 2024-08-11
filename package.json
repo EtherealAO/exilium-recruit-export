@@ -1,6 +1,6 @@
 {
   "name": "exilium-recruit-export",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "main": "./dist/electron/main/main.js",
   "author": "Lipi <https://github.com/EtherealAO>",
   "homepage": "https://github.com/EtherealAO/exilium-recruit-export",
